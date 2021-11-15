@@ -6,30 +6,11 @@ class PostsController < ApplicationController
 
   # GET /posts or /posts.json
   def index
-    # @posts = Post.all
-    @posts = policy_scope(Post).reverse
+    @posts = policy_scope(Post).order(created_at: :desc)
+    @post = Post.new
+    # or
+    # @post = current_user.posts.build
   end
-
-  def upvote
-    @post = Post.find(params[:id])
-    if current_user.voted_up_on? @post
-      @post.unvote_by current_user
-    else
-      @post.upvote_by current_user
-    end
-    render "vote.js.erb"
-  end
-
-  def downvote
-    @post = Post.find(params[:id])
-    if current_user.voted_down_on? @post
-      @post.unvote_by current_user
-    else
-      @post.downvote_by current_user
-    end
-    render "vote.js.erb"
-  end
-
 
   # GET /posts/1 or /posts/1.json
   def show
@@ -55,9 +36,11 @@ class PostsController < ApplicationController
       if @post.save
         format.html { redirect_to @post, notice: "Post was successfully created." }
         format.json { render :show, status: :created, location: @post }
+        format.js
       else
         format.html { render :new, status: :unprocessable_entity }
         format.json { render json: @post.errors, status: :unprocessable_entity }
+        format.js
       end
     end
   end
@@ -68,9 +51,11 @@ class PostsController < ApplicationController
       if @post.update(post_params)
         format.html { redirect_to @post, notice: "Post was successfully updated." }
         format.json { render :show, status: :ok, location: @post }
+        format.js
       else
         format.html { render :edit, status: :unprocessable_entity }
         format.json { render json: @post.errors, status: :unprocessable_entity }
+        format.js
       end
     end
   end
@@ -78,10 +63,34 @@ class PostsController < ApplicationController
   # DELETE /posts/1 or /posts/1.json
   def destroy
     @post.destroy
+
     respond_to do |format|
       format.html { redirect_to posts_url, notice: "Post was successfully destroyed." }
       format.json { head :no_content }
+      format.js
     end
+  end
+
+  def upvote
+    @post = Post.find(params[:id])
+    if current_user.voted_up_on? @post
+      @post.unvote_by current_user
+    else
+      @post.upvote_by current_user
+    end
+
+    render "vote.js.haml"
+  end
+
+  def downvote
+    @post = Post.find(params[:id])
+    if current_user.voted_down_on? @post
+      @post.unvote_by current_user
+    else
+      @post.downvote_by current_user
+    end
+
+    render "vote.js.haml"
   end
 
   private
